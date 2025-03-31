@@ -11,7 +11,7 @@ x_bearer_token = os.getenv("X_BEARER_TOKEN")
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 stripe_publishable_key = os.getenv("STRIPE_PUBLISHABLE_KEY")
 
-# Temporary storage for ad data (in-memory, not ideal for production but works for now)
+# Temporary in-memory storage for ad data (not ideal for production, but works for now)
 ad_storage = {}
 
 def get_trending_hashtag():
@@ -69,12 +69,12 @@ def adspark():
                 model="dall-e-2",
                 prompt=image_prompt,
                 n=1,
-                size="512x512",  # Reduced size to lower payload
+                size="512x512",
                 response_format="b64_json"
             )
             image_data = image_response.data[0].b64_json
             # Store ad and image data temporarily
-            ad_storage[ad_id] = {'ad': ad, 'image_data': image_data}
+            ad_storage[ad_id] = {'ad': ad, 'image_data': image_data, 'trend': trend}
     except Exception as e:
         print(f"Ad generation error: {str(e)}")
         ad = "Error generating ad—please try again."
@@ -100,7 +100,7 @@ def pay():
             mode='payment',
             success_url='https://vo-adspark-clone.vercel.app/success?ad_id=' + ad_id,
             cancel_url='https://vo-adspark-clone.vercel.app/cancel',
-            metadata={'ad': ad, 'image_data': image_data}
+            metadata={'ad_id': ad_id}  # Store ad_id instead of large data
         )
         return f'''
             <script src="https://js.stripe.com/v3/"></script>
@@ -119,7 +119,8 @@ def success():
     ad_data = ad_storage.get(ad_id, {})
     ad = ad_data.get('ad', 'Unknown Ad')
     image_data = ad_data.get('image_data', '')
-    return render_template('success.html', ad=ad, image_data=image_data)
+    trend = ad_data.get('trend', '#HotDeal')
+    return render_template('success.html', ad=ad, image_data=image_data, trend=trend)
 
 @app.route('/cancel')
 def cancel():
