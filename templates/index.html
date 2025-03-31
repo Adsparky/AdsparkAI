@@ -25,11 +25,15 @@
             <input type="text" name="category" placeholder="e.g., drink">
             <input type="submit" value="Generate Ad">
         </form>
-        <p>{{ ad }}</p>
-        <p>{{ warning }}</p>
-        {% if image_data %}
-            <img src="data:image/png;base64,{{ image_data }}" alt="Generated Ad Image">
+        {% if ad %}
+            <div class="sample-card">
+                <p>{{ ad }}</p>
+                {% if image_data %}
+                    <img src="data:image/png;base64,{{ image_data }}" alt="Generated Ad Image">
+                {% endif %}
+            </div>
         {% endif %}
+        <p>{{ warning }}</p>
     </div>
     <footer>
         © 2025 AdSpark AI | Built by <a href="https://github.com/Adsparky" target="_blank">Adsparky</a>
