@@ -10,14 +10,23 @@ x_bearer_token = os.getenv("X_BEARER_TOKEN")
 
 def get_trending_hashtag():
     try:
+        if not x_bearer_token:
+            print("X_BEARER_TOKEN is not set in environment variables")
+            return "#HotDeal"
         headers = {"Authorization": f"Bearer {x_bearer_token}"}
         response = requests.get("https://api.twitter.com/1.1/trends/place.json?id=1", headers=headers)
         response.raise_for_status()
-        trends = response.json()[0]["trends"]
-        return trends[0]["name"] if trends else "#HotDeal"
-    except Exception as e:
-        print(f"Trend fetch error: {e}")
+        trends = response.json()
+        print(f"X API Response: {trends}")  # Debug log
+        if trends and "trends" in trends[0] and trends[0]["trends"]:
+            return trends[0]["trends"][0]["name"]
+        print("No trends found in response")
         return "#HotDeal"
+    except Exception as e:
+        print(f"Trend fetch error: {str(e)}")  # Debug log
+        # Fallback to static trends
+        static_trends = ["#SpringVibes", "#TechTrend", "#FoodieFinds", "#FitnessGoals"]
+        return static_trends[0]
 
 @app.route('/')
 def home():
@@ -52,7 +61,7 @@ def adspark():
             model="dall-e-2",
             prompt=image_prompt,
             n=1,
-            size="512x512",
+            size="1024x1024",  # Higher resolution
             response_format="b64_json"
         )
         image_data = image_response.data[0].b64_json
