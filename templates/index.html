@@ -33,8 +33,7 @@
                     <img src="data:image/png;base64,{{ image_data }}" alt="Generated Ad Image">
                 {% endif %}
                 <form action="/pay" method="POST">
-                    <input type="hidden" name="ad" value="{{ ad }}">
-                    <input type="hidden" name="image_data" value="{{ image_data }}">
+                    <input type="hidden" name="ad_id" value="{{ ad_id }}">
                     <input type="submit" value="Pay $10 to Use This Ad" style="background: linear-gradient(90deg, #ff4d4d, #ff6b6b); margin-top: 10px;">
                 </form>
             </div>
