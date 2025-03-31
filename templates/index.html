@@ -14,7 +14,11 @@
             <label>Product:</label>
             <input type="text" name="product" placeholder="e.g., coffee">
             <label>Audience:</label>
-            <input type="text" name="audience" placeholder="e.g., moms">
+            <select name="audience">
+                {% for audience in audiences %}
+                    <option value="{{ audience }}">{{ audience }}</option>
+                {% endfor %}
+            </select>
             <label>Budget:</label>
             <input type="text" name="budget" placeholder="e.g., 10">
             <label>Category:</label>
