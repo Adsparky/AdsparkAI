@@ -12,6 +12,12 @@
     <div class="container">
         <h2 style="color: #00ff95;">Payment Successful!</h2>
         <p>Your ad is ready to use. Check your email for details, or download it below.</p>
+        <div class="sample-card">
+            <p>{{ ad }}</p>
+            {% if image_data %}
+                <img src="data:image/png;base64,{{ image_data }}" alt="Purchased Ad Image">
+            {% endif %}
+        </div>
         <a href="/" style="display: inline-block; margin-top: 20px; color: #00e0ff; text-decoration: none;">Back to Home</a>
     </div>
     <footer>
