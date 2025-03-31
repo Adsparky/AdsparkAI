@@ -4,13 +4,29 @@
     <title>AdSpark AI</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .loading-spinner {
+            display: none;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #00e0ff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
     <header>
         <h1>AdSpark AI</h1>
     </header>
     <div class="container">
-        <form method="POST">
+        <form method="POST" id="adForm" onsubmit="showLoading()">
             <label>Product:</label>
             <input type="text" name="product" placeholder="e.g., coffee">
             <label>Audience:</label>
@@ -25,6 +41,7 @@
             <input type="text" name="category" placeholder="e.g., drink">
             <input type="submit" value="Generate Ad">
         </form>
+        <div class="loading-spinner" id="loadingSpinner"></div>
         {% if ad %}
             <div class="sample-card">
                 <p>{{ ad }}</p>
@@ -44,5 +61,10 @@
     <footer>
         © 2025 AdSpark AI | Built by <a href="https://github.com/Adsparky" target="_blank">Adsparky</a>
     </footer>
+    <script>
+        function showLoading() {
+            document.getElementById('loadingSpinner').style.display = 'block';
+        }
+    </script>
 </body>
 </html>
