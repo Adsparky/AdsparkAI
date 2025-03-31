@@ -39,62 +39,71 @@ def adspark():
     ad = ""
     warning = ""
     image_data = ""
+    trend = "#HotDeal"
     audiences = ["moms", "teens", "dads", "students", "gamers", "fitness", "foodies", "travelers"]
-    if request.method == 'POST':
-        product = request.form['product']
-        audience = request.form['audience']
-        budget = request.form['budget']
-        category = request.form['category']
-        trend = get_trending_hashtag()
-        verb = "love" if product == "coffee" else "enjoy"
-        cta = "Sip it now!" if category == "drink" else "Grab it now!"
-        prompt = f"Write a short punchy ad slogan for {audience} about {product} with no punctuation no special characters no conjunctions"
-        response = openai.chat.completions.create(
-            model="gmt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=8
-        )
-        slogan = response.choices[0].message.content.strip().replace("  ", " ")
-        ad = f"{audience} {verb} {product}—{slogan} for ${budget}! {trend} {cta}"
-        if int(budget) > 20:
-            warning = "Tip: Keep it under $20 for max reach!"
-        image_prompt = f"A vibrant ad image for {audience} featuring {product}, modern style with a cozy vibe"
-        image_response = openai.images.generate(
-            model="dall-e-2",
-            prompt=image_prompt,
-            n=1,
-            size="1024x1024",
-            response_format="b64_json"
-        )
-        image_data = image_response.data[0].b64_json
+    try:
+        if request.method == 'POST':
+            product = request.form['product']
+            audience = request.form['audience']
+            budget = request.form['budget']
+            category = request.form['category']
+            trend = get_trending_hashtag()
+            verb = "love" if product == "coffee" else "enjoy"
+            cta = "Sip it now!" if category == "drink" else "Grab it now!"
+            prompt = f"Write a short punchy ad slogan for {audience} about {product} with no punctuation no special characters no conjunctions"
+            response = openai.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=8
+            )
+            slogan = response.choices[0].message.content.strip().replace("  ", " ")
+            ad = f"{audience} {verb} {product}—{slogan} for ${budget}! {trend} {cta}"
+            if int(budget) > 20:
+                warning = "Tip: Keep it under $20 for max reach!"
+            image_prompt = f"A vibrant ad image for {audience} featuring {product}, modern style with a cozy vibe"
+            image_response = openai.images.generate(
+                model="dall-e-2",
+                prompt=image_prompt,
+                n=1,
+                size="1024x1024",
+                response_format="b64_json"
+            )
+            image_data = image_response.data[0].b64_json
+    except Exception as e:
+        print(f"Ad generation error: {str(e)}")
+        ad = "Error generating ad—please try again."
     return render_template('index.html', ad=ad, warning=warning, image_data=image_data, audiences=audiences, trend=trend, stripe_publishable_key=stripe_publishable_key)
 
 @app.route('/pay', methods=['POST'])
 def pay():
-    ad = request.form['ad']
-    image_data = request.form['image_data']
-    session = stripe.checkout.Session.create(
-        payment_method_types=['card'],
-        line_items=[{
-            'price_data': {
-                'currency': 'usd',
-                'product_data': {'name': 'AdSpark Ad'},
-                'unit_amount': 1000,  # $10 in cents
-            },
-            'quantity': 1,
-        }],
-        mode='payment',
-        success_url='https://vo-adspark-clone.vercel.app/success',
-        cancel_url='https://vo-adspark-clone.vercel.app/cancel',
-        metadata={'ad': ad, 'image_data': image_data}
-    )
-    return f'''
-        <script src="https://js.stripe.com/v3/"></script>
-        <script>
-            var stripe = Stripe("{stripe_publishable_key}");
-            stripe.redirectToCheckout({{sessionId: "{session.id}"}});
-        </script>
-    '''
+    try:
+        ad = request.form['ad']
+        image_data = request.form['image_data']
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {'name': 'AdSpark Ad'},
+                    'unit_amount': 1000,  # $10 in cents
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            success_url='https://vo-adspark-clone.vercel.app/success',
+            cancel_url='https://vo-adspark-clone.vercel.app/cancel',
+            metadata={'ad': ad, 'image_data': image_data}
+        )
+        return f'''
+            <script src="https://js.stripe.com/v3/"></script>
+            <script>
+                var stripe = Stripe("{stripe_publishable_key}");
+                stripe.redirectToCheckout({{sessionId: "{session.id}"}});
+            </script>
+        '''
+    except Exception as e:
+        print(f"Payment error: {str(e)}")
+        return "Error initiating payment—please try again."
 
 @app.route('/success')
 def success():
