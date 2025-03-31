@@ -28,12 +28,19 @@
         {% if ad %}
             <div class="sample-card">
                 <p>{{ ad }}</p>
+                <p style="font-size: 0.9em; color: #777;">Trend: {{ trend }} (via X)</p>
                 {% if image_data %}
                     <img src="data:image/png;base64,{{ image_data }}" alt="Generated Ad Image">
                 {% endif %}
+                <form action="/pay" method="POST">
+                    <input type="hidden" name="ad" value="{{ ad }}">
+                    <input type="hidden" name="image_data" value="{{ image_data }}">
+                    <input type="submit" value="Pay $10 to Use This Ad" style="background: #2ecc71; margin-top: 10px;">
+                </form>
             </div>
         {% endif %}
         <p>{{ warning }}</p>
+        <a href="/" style="display: inline-block; margin-top: 20px; color: #6366f1; text-decoration: none;">Back to Home</a>
     </div>
     <footer>
         © 2025 AdSpark AI | Built by <a href="https://github.com/Adsparky" target="_blank">Adsparky</a>
