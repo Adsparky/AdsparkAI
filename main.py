@@ -50,9 +50,9 @@ def adspark():
         cta = "Sip it now!" if category == "drink" else "Grab it now!"
         prompt = f"Write a short punchy ad slogan for {audience} about {product} with no punctuation no special characters no conjunctions"
         response = openai.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gmt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=8  # Tighter slogans
+            max_tokens=8
         )
         slogan = response.choices[0].message.content.strip().replace("  ", " ")
         ad = f"{audience} {verb} {product}—{slogan} for ${budget}! {trend} {cta}"
@@ -86,7 +86,7 @@ def pay():
         mode='payment',
         success_url='https://vo-adspark-clone.vercel.app/success',
         cancel_url='https://vo-adspark-clone.vercel.app/cancel',
-        metadata={'ad': ad, 'image_data': image_data}  # Store ad and image for later
+        metadata={'ad': ad, 'image_data': image_data}
     )
     return f'''
         <script src="https://js.stripe.com/v3/"></script>
