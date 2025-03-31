@@ -43,7 +43,7 @@ def adspark():
     warning = ""
     image_data = ""
     trend = "#HotDeal"
-    ad_id = str(len(ad_storage))  # Simple ID for ad storage
+    ad_id = str(len(ad_storage))
     audiences = ["moms", "teens", "dads", "students", "gamers", "fitness", "foodies", "travelers"]
     try:
         if request.method == 'POST':
@@ -73,7 +73,6 @@ def adspark():
                 response_format="b64_json"
             )
             image_data = image_response.data[0].b64_json
-            # Store ad and image data temporarily
             ad_storage[ad_id] = {'ad': ad, 'image_data': image_data, 'trend': trend}
     except Exception as e:
         print(f"Ad generation error: {str(e)}")
@@ -83,10 +82,14 @@ def adspark():
 @app.route('/pay', methods=['POST'])
 def pay():
     try:
+        print(f"Stripe Publishable Key: {stripe_publishable_key}")
+        print(f"Stripe Secret Key: {stripe.api_key}")
         ad_id = request.form['ad_id']
+        print(f"Received ad_id: {ad_id}")
         ad_data = ad_storage.get(ad_id, {})
         ad = ad_data.get('ad', 'Unknown Ad')
         image_data = ad_data.get('image_data', '')
+        print(f"Ad: {ad}, Image Data Length: {len(image_data) if image_data else 0}")
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[{
@@ -100,14 +103,32 @@ def pay():
             mode='payment',
             success_url='https://vo-adspark-clone.vercel.app/success?ad_id=' + ad_id,
             cancel_url='https://vo-adspark-clone.vercel.app/cancel',
-            metadata={'ad_id': ad_id}  # Store ad_id instead of large data
+            metadata={'ad_id': ad_id}
         )
+        print(f"Stripe Session Created: {session.id}")
         return f'''
-            <script src="https://js.stripe.com/v3/"></script>
-            <script>
-                var stripe = Stripe("{stripe_publishable_key}");
-                stripe.redirectToCheckout({{sessionId: "{session.id}"}});
-            </script>
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Redirecting to Stripe Checkout</title>
+                <script src="https://js.stripe.com/v3/"></script>
+            </head>
+            <body>
+                <p>Redirecting to Stripe Checkout...</p>
+                <script>
+                    var stripe = Stripe("{stripe_publishable_key}");
+                    stripe.redirectToCheckout({{sessionId: "{session.id}"}})
+                        .then(function(result) {{
+                            if (result.error) {{
+                                document.body.innerHTML = "<p>Error: " + result.error.message + "</p>";
+                            }}
+                        }})
+                        .catch(function(error) {{
+                            document.body.innerHTML = "<p>Error redirecting to Stripe Checkout: " + error.message + "</p>";
+                        }});
+                </script>
+            </body>
+            </html>
         '''
     except Exception as e:
         print(f"Payment error: {str(e)}")
