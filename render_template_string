@@ -1,0 +1,7 @@
+<style>
+    body { font-family: Arial; text-align: center; background: #f0f0f0; }
+    h1 { color: #333; }
+    form { margin: 20px; }
+    input { padding: 5px; margin: 5px; }
+    p { color: green; font-weight: bold; }
+</style>
