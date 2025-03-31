@@ -11,6 +11,9 @@ x_bearer_token = os.getenv("X_BEARER_TOKEN")
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 stripe_publishable_key = os.getenv("STRIPE_PUBLISHABLE_KEY")
 
+# Temporary storage for ad data (in-memory, not ideal for production but works for now)
+ad_storage = {}
+
 def get_trending_hashtag():
     try:
         if not x_bearer_token:
@@ -40,6 +43,7 @@ def adspark():
     warning = ""
     image_data = ""
     trend = "#HotDeal"
+    ad_id = str(len(ad_storage))  # Simple ID for ad storage
     audiences = ["moms", "teens", "dads", "students", "gamers", "fitness", "foodies", "travelers"]
     try:
         if request.method == 'POST':
@@ -65,20 +69,24 @@ def adspark():
                 model="dall-e-2",
                 prompt=image_prompt,
                 n=1,
-                size="1024x1024",
+                size="512x512",  # Reduced size to lower payload
                 response_format="b64_json"
             )
             image_data = image_response.data[0].b64_json
+            # Store ad and image data temporarily
+            ad_storage[ad_id] = {'ad': ad, 'image_data': image_data}
     except Exception as e:
         print(f"Ad generation error: {str(e)}")
         ad = "Error generating ad—please try again."
-    return render_template('index.html', ad=ad, warning=warning, image_data=image_data, audiences=audiences, trend=trend, stripe_publishable_key=stripe_publishable_key)
+    return render_template('index.html', ad=ad, warning=warning, image_data=image_data, audiences=audiences, trend=trend, stripe_publishable_key=stripe_publishable_key, ad_id=ad_id)
 
 @app.route('/pay', methods=['POST'])
 def pay():
     try:
-        ad = request.form['ad']
-        image_data = request.form['image_data']
+        ad_id = request.form['ad_id']
+        ad_data = ad_storage.get(ad_id, {})
+        ad = ad_data.get('ad', 'Unknown Ad')
+        image_data = ad_data.get('image_data', '')
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[{
@@ -90,7 +98,7 @@ def pay():
                 'quantity': 1,
             }],
             mode='payment',
-            success_url='https://vo-adspark-clone.vercel.app/success',
+            success_url='https://vo-adspark-clone.vercel.app/success?ad_id=' + ad_id,
             cancel_url='https://vo-adspark-clone.vercel.app/cancel',
             metadata={'ad': ad, 'image_data': image_data}
         )
@@ -107,11 +115,15 @@ def pay():
 
 @app.route('/success')
 def success():
-    return "Payment successful! Your ad is ready to use. Check your email for details."
+    ad_id = request.args.get('ad_id', '')
+    ad_data = ad_storage.get(ad_id, {})
+    ad = ad_data.get('ad', 'Unknown Ad')
+    image_data = ad_data.get('image_data', '')
+    return render_template('success.html', ad=ad, image_data=image_data)
 
 @app.route('/cancel')
 def cancel():
-    return "Payment cancelled—try again!"
+    return render_template('cancel.html')
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
