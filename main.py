@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template_string
 import openai
 import os
+import base64  # For displaying images
 
 app = Flask(__name__)
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -9,6 +10,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 def adspark():
     ad = ""
     warning = ""
+    image_data = ""  # To store base64 image data
     if request.method == 'POST':
         product = request.form['product']
         audience = request.form['audience']
@@ -17,6 +19,7 @@ def adspark():
         trend = "#MomLife" if audience == "moms" else "#HotDeal"
         verb = "love" if product == "coffee" else "enjoy"
         cta = "Sip it now!" if category == "drink" else "Grab it now!"
+        # Generate text ad
         prompt = f"Write a short punchy ad slogan for {audience} about {product} with no punctuation no special characters no conjunctions"
         response = openai.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -27,6 +30,16 @@ def adspark():
         ad = f"{audience} {verb} {product}—{slogan} for ${budget}! {trend} {cta}"
         if int(budget) > 20:
             warning = "Tip: Keep it under $20 for max reach!"
+        # Generate image
+        image_prompt = f"A vibrant ad image for {audience} featuring {product}, simple style"
+        image_response = openai.images.generate(
+            model="dall-e-2",  # DALL-E 2 (cheaper than DALL-E 3)
+            prompt=image_prompt,
+            n=1,
+            size="512x512",  # Smaller size to save cost
+            response_format="b64_json"  # Base64 for easy display
+        )
+        image_data = image_response.data[0].b64_json  # Base64-encoded image
     return render_template_string('''
         <!DOCTYPE html>
         <html>
@@ -74,6 +87,7 @@ def adspark():
                     max-width: 500px;
                     width: 100%;
                     margin-top: 80px;
+                    margin-bottom: 80px;
                 }
                 form {
                     display: flex;
@@ -120,6 +134,12 @@ def adspark():
                     color: #e63946;
                     font-weight: 400;
                 }
+                img {
+                    max-width: 300px;
+                    margin-top: 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                }
                 footer {
                     position: fixed;
                     bottom: 0;
@@ -158,12 +178,16 @@ def adspark():
                 </form>
                 <p>{{ ad }}</p>
                 <p>{{ warning }}</p>
+                {% if image_data %}
+                    <img src="data:image/png;base64,{{ image_data }}" alt="Generated Ad Image">
+                {% endif %}
             </div>
             <footer>
                 © 2025 AdSpark AI | Built by <a href="https://github.com/Adsparky" target="_blank">Adsparky</a>
             </footer>
         </body>
         </html>
-    ''', ad=ad, warning=warning)
+    ''', ad=ad, warning=warning, image_data=image_data)
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
